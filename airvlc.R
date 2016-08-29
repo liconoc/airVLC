@@ -6,11 +6,9 @@ require("sp")
 require("geojsonio")
 require("jsonlite")
 
-setwd("C:/Users/Lidia/Dropbox/DSIC/airVLC/airVLC_web_vTFM")
-
 hora_sistema<-format(Sys.time(), "%H")
 
-#Coordenadas estaciones de medici髇 de contaminaci髇
+#Coordenadas estaciones de medici贸n de contaminaci贸n
 coordenadas_estaciones_contaminacion<-matrix(ncol = 5)
 colnames(coordenadas_estaciones_contaminacion) = c("id_estacion", "nombre", "nombre_corto", "latitud", "longitud")
 coordenadas_estaciones_contaminacion<-as.data.frame(coordenadas_estaciones_contaminacion)
@@ -19,12 +17,12 @@ coordenadas_estaciones_contaminacion[2,]<-c("2","Pista de Silla","Pista","39.458
 coordenadas_estaciones_contaminacion[3,]<-c("3","Avda. Francia","Francia","39.45752","-0.34266")
 coordenadas_estaciones_contaminacion[4,]<-c("4","Viveros","Viveros","39.47964","-0.36964")
 coordenadas_estaciones_contaminacion[5,]<-c("5","Bulevar Sur","Bulevar","39.45039","-0.39633")
-coordenadas_estaciones_contaminacion[6,]<-c("6","Universidad Polit閏nica","UPV","39.47964","-0.3374")
+coordenadas_estaciones_contaminacion[6,]<-c("6","Universidad Polit茅cnica","UPV","39.47964","-0.3374")
 
 #Contaminantes #Prueba: Solo los 4 contaminantes iniciales
 contaminantes<-c("NO","NO2","O3","SO2")
 
-#Tabla de predicciones de contaminantes por estaci髇
+#Tabla de predicciones de contaminantes por estaci贸n
 prediccion_contaminantes <- matrix(ncol = dim(coordenadas_estaciones_contaminacion)[1], nrow = length(contaminantes))
 colnames(prediccion_contaminantes)=c(coordenadas_estaciones_contaminacion$nombre_corto)
 rownames(prediccion_contaminantes)=c(contaminantes)
@@ -33,17 +31,17 @@ rownames(prediccion_contaminantes)=c(contaminantes)
 ################### 1. Descarga de datos ########################
 #################################################################
 
-#Datos tr醘ico
-#Hay puntos de tr醘ico duplicados, se eliminan
+#Datos tr谩fico
+#Hay puntos de tr谩fico duplicados, se eliminan
 #X = longitud, Y = latitud
 data_trafico<-read.csv("http://mapas.valencia.es/lanzadera/opendata/tra_espiras_p/CSV",sep=";")
 data_trafico<-data_trafico[complete.cases(data_trafico),]
 data_trafico<-data_trafico[!duplicated(data_trafico$idpm),]
 
-#Datos meteorol骻icos
-#Tiene tres lineas vac韆s al principio, hay que saltarlas
+#Datos meteorol贸gicos
+#Tiene tres lineas vac铆as al principio, hay que saltarlas
 #La velocidad del viento viene en km/h, necesitamos m/s
-#La direcci髇 del viento es un string, necesitamos los grados
+#La direcci贸n del viento es un string, necesitamos los grados
 data_clima<-readLines("http://www.aemet.es/es/eltiempo/observacion/ultimosdatos_8416Y_datos-horarios.csv?k=val&l=8416Y&datos=det&w=0&f=temperatura&x=h24")
 data_clima<-iconv(data_clima, "latin1", "ASCII", sub="")
 write(file="tmp.csv",data_clima)
@@ -60,7 +58,7 @@ levels(data_clima$Direccin.del.viento)[levels(data_clima$Direccin.del.viento)=="
 data_clima$Direccin.del.viento<-as.numeric(as.character(data_clima$Direccin.del.viento))
 data_clima$Velocidad.del.viento..km.h.<-data_clima$Velocidad.del.viento..km.h.*0.277777777778
 
-#Necesito temperatura, humedad, precipitaciones, presi髇, velocidad del viento y direcci髇 del viento de AHORA
+#Necesito temperatura, humedad, precipitaciones, presi贸n, velocidad del viento y direcci贸n del viento de AHORA
 fecha<-format(Sys.time(), "%d/%m/%Y %H:00")
 wday<- as.POSIXlt(Sys.time())$wday
 dia<-strsplit(strsplit(fecha," ")[[1]][1],"/")[[1]][1]
@@ -83,19 +81,19 @@ presion<-data_clima[which(data_clima$Fecha.y.hora.oficial==fecha),8]
 if(is.na(presion)) presion<-1000 #Solo mientras use AEMET
 humedad<-data_clima[which(data_clima$Fecha.y.hora.oficial==fecha),10]
 
-#Tabla test para la predicci髇
+#Tabla test para la predicci贸n
 load("ficheros/modelos/test.RData")
 test<-test[1,]
 
-#Guardamos clima y tr醘ico
+#Guardamos clima y tr谩fico
 write.csv(data_clima[which(data_clima$Fecha.y.hora.oficial==fecha),], file = paste("ficheros/datos/",hora_sistema,"/clima.csv", sep = ""))
 write.csv(data_trafico, file = paste("ficheros/datos/",hora_sistema,"/trafico.csv", sep = ""))
 
 #################################################################
-##### 2. Predicci髇 de cada contaminante en las estaciones ######
+##### 2. Predicci贸n de cada contaminante en las estaciones ######
 #################################################################
 
-# Espiras cercanas a cada estaci髇, para el m閠odo wdir
+# Espiras cercanas a cada estaci贸n, para el m茅todo wdir
 espiras_1km<-read.csv("ficheros/espiras_1km.csv")
 
 for(e in 1:dim(coordenadas_estaciones_contaminacion)[1]){
@@ -106,7 +104,7 @@ for(e in 1:dim(coordenadas_estaciones_contaminacion)[1]){
   espiras_estacion<-espiras_1km[which(espiras_1km$estacion==nombre_corto),]
   puntos_cercanos<-as.numeric(espiras_1km$idpm)
   
-  #Datos tr醘ico para la estaci髇 para la versi髇 wdir
+  #Datos tr谩fico para la estaci贸n para la versi贸n wdir
   data_trafico_estacion<-data_trafico[which(data_trafico$idpm %in% puntos_cercanos),]
   
   #Si existe direccion del viento, la transformo y cojo los puntos dentro de rango
@@ -172,16 +170,16 @@ for(e in 1:dim(coordenadas_estaciones_contaminacion)[1]){
 write.csv(t(prediccion_contaminantes), file = paste("ficheros/datos/",hora_sistema,"/prediccion.csv", sep = ""))
 
 #################################################################
-############## 3. Extrapolaci髇 a toda la ciudad ################
+############## 3. Extrapolaci贸n a toda la ciudad ################
 #################################################################
 
 #Coordenadas de las estaciones
 latitud_e<-coordenadas_estaciones_contaminacion[,"latitud"]
 longitud_e<-coordenadas_estaciones_contaminacion[,"longitud"]
 
-################################ 2.1 Extrapolaci髇 mediante poligonos (para la web) ##################################
+################################ 2.1 Extrapolaci贸n mediante poligonos (para la web) ##################################
 
-#Tama駉 y distancia de los pol韌onos
+#Tama帽o y distancia de los pol铆gonos
 tam<-0.005
 longitud<--0.42
 longitud_dest<--0.32-tam
@@ -304,7 +302,7 @@ for(contaminante in contaminantes){
 }
 
 
-################################ 2.2 Extrapolaci髇 mediante grid de celdas peque馻s (0.001) (para mapa densidad) ###########################
+################################ 2.2 Extrapolaci贸n mediante grid de celdas peque帽as (0.001) (para mapa densidad) ###########################
 
 #Mapa Valencia
 Valencia <- get_map(location=c(lon=-0.3783341, lat=39.4732093), zoom=14, maptype="terrain", language="es-ES")
@@ -338,7 +336,7 @@ for(contaminante in contaminantes){
       }}
     
 
-    #Estaciones que caen dentro y fuera del angulo del viento (seg鷑 el punto de tr醘ico)
+    #Estaciones que caen dentro y fuera del angulo del viento (seg煤n el punto de tr谩fico)
     if(!(is.na(dirViento))){
       puntos_dentro<-c()
       if(dirViento>=0&dirViento<=30){
@@ -435,7 +433,7 @@ for(contaminante in contaminantes){
 }
   
 
-#Creamos un gif con las 鷏timas 24h de los mapas de densidad
+#Creamos un gif con las 煤ltimas 24h de los mapas de densidad
 for(contaminante in contaminantes){
   hora<-hora_sistema
   horas<-24
